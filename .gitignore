@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+out/
+*.ome.zarr/
+preview.png
+.DS_Store
+.superpowers/
+.ruff_cache/
+dist/
+build/

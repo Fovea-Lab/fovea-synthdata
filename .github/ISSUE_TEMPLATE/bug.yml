@@ -1,0 +1,24 @@
+name: Report a reproducible problem
+description: Report a generator, interface or measurement result that behaves unexpectedly.
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and design
+      description: Include the package version, Python version, generator, preset or minimal design, seed, and writer.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide a short command or Python example.
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Expected and observed results
+      description: Include any relevant measurements, error output, or row from the check report.
+    validations:
+      required: true

@@ -1,0 +1,50 @@
+name: Check
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    # The historical byte fixtures were recorded with Apple silicon and the locked stack.
+    runs-on: macos-15
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          python-version: '3.13'
+      - run: uv sync --locked --all-extras
+      - run: uv run --no-sync pytest -q
+
+  distribution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          python-version: '3.12'
+      - name: Build source and wheel distributions
+        run: uv build
+      - name: Install and exercise the wheel outside the checkout
+        working-directory: ${{ runner.temp }}
+        shell: bash
+        run: |
+          uv venv --python 3.12 wheel-env
+          wheel=( "$GITHUB_WORKSPACE"/dist/*.whl )
+          uv pip install --python wheel-env/bin/python "${wheel[0]}"
+          wheel-env/bin/synthdata list
+          wheel-env/bin/synthdata preset export particle_plate/small -o starter.yaml
+          uv pip install --python wheel-env/bin/python "${wheel[0]}[particle_plate,cell_plate,api,mcp]"
+          uv pip check --python wheel-env/bin/python
+          wheel-env/bin/python -I "$GITHUB_WORKSPACE/tests/installed_release.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: distributions
+          path: dist/
+          if-no-files-found: error

@@ -1,0 +1,158 @@
+generator: particle_plate
+seed: 7
+plate:
+  format:
+    rows: 8
+    cols: 4
+  plates: 1
+  sites_per_well: 2
+  image:
+    height: 384
+    width: 384
+    dtype: uint16
+    pixel_size_um: 0.65
+  channels:
+  - name: particles
+image_effects:
+  background:
+    dist: normal
+    mean: 200.0
+    sd: 5.0
+  noise:
+    poisson: true
+    gaussian_sd: 8.0
+  illumination:
+    kind: radial
+    strength: 0.15
+    angle: 0.0
+  edge_effect:
+    enabled: false
+    dim: 0.1
+base_particle:
+  count:
+    dist: poisson
+    mean: 14.0
+  arrangement:
+    kind: uniform
+    clusters: 5
+    spread: 50.0
+  diameter:
+    dist: normal
+    mean: 12.0
+    sd: 1.0
+  eccentricity:
+    dist: beta_mean
+    mean: 0.1
+    sd: 0.05
+  orientation:
+    dist: uniform
+    low: 0.0
+    high: 180.0
+  intensity:
+    dist: normal
+    mean: 1500.0
+    sd: 100.0
+  profile:
+    kind: flat
+    sigma_frac: 0.35
+    width_frac: 0.3
+  edge_softness:
+    dist: fixed
+    value: 1.0
+conditions:
+  control:
+    role: control
+  control_twin:
+    role: control
+  large:
+    role: test
+    diameter:
+      dist: normal
+      mean: 20.0
+      sd: 2.0
+  elongated:
+    role: test
+    eccentricity:
+      dist: beta_mean
+      mean: 0.8
+      sd: 0.05
+  aligned:
+    role: test
+    eccentricity:
+      dist: beta_mean
+      mean: 0.8
+      sd: 0.05
+    orientation:
+      dist: normal
+      mean: 45.0
+      sd: 5.0
+  dim_peaked:
+    role: test
+    intensity:
+      dist: normal
+      mean: 900.0
+      sd: 80.0
+    profile:
+      kind: gaussian
+      sigma_frac: 0.35
+      width_frac: 0.3
+  two_sizes:
+    role: test
+    diameter:
+      dist: mixture
+      components:
+      - weight: 0.5
+        dist: normal
+        mean: 8.0
+        sd: 1.0
+      - weight: 0.5
+        dist: normal
+        mean: 20.0
+        sd: 2.0
+  crowded:
+    role: test
+    count:
+      dist: poisson
+      mean: 42.0
+    arrangement:
+      kind: clumped
+      clusters: 3
+      spread: 30.0
+layout:
+  kind: by_row
+  order:
+  - control
+  - control_twin
+  - large
+  - elongated
+  - aligned
+  - dim_peaked
+  - two_sizes
+  - crowded
+  wells: {}
+expectations:
+  reference: control
+  same:
+  - control_twin
+  differs:
+    large:
+    - diameter
+    elongated:
+    - eccentricity
+    aligned:
+    - eccentricity
+    - orientation_spread
+    dim_peaked:
+    - intensity
+    two_sizes:
+    - bimodal_diameter
+    crowded:
+    - count
+    - nn_distance
+  pairs:
+  - a: elongated
+    b: aligned
+    differs:
+    - orientation_spread
+    same:
+    - eccentricity

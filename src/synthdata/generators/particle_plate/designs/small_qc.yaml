@@ -1,0 +1,71 @@
+# CI-sized version of default.yaml: same conditions and expectations, 8×4 wells, 2 sites of 384².
+generator: particle_plate
+seed: 7
+plate:
+  format: {rows: 8, cols: 4}
+  plates: 1
+  sites_per_well: 2
+  image: {height: 384, width: 384, dtype: uint16, pixel_size_um: 0.65}
+  channels: [{name: particles}]
+image_effects:
+  background: {dist: normal, mean: 200, sd: 5}
+  noise: {poisson: true, gaussian_sd: 8}
+  illumination: {kind: radial, strength: 0.15}
+  edge_effect: {enabled: false, dim: 0.1}
+base_particle:
+  count: {dist: poisson, mean: 14}
+  arrangement: {kind: uniform}
+  diameter: {dist: normal, mean: 12, sd: 1}
+  eccentricity: {dist: beta_mean, mean: 0.1, sd: 0.05}
+  orientation: {dist: uniform, low: 0, high: 180}
+  intensity: {dist: normal, mean: 1500, sd: 100}
+  profile: {kind: flat}
+  edge_softness: {dist: fixed, value: 1.0}
+conditions:
+  control: {role: control}
+  control_twin: {role: control}
+  large:
+    diameter: {dist: normal, mean: 20, sd: 2}
+  elongated:
+    eccentricity: {dist: beta_mean, mean: 0.8, sd: 0.05}
+  aligned:
+    eccentricity: {dist: beta_mean, mean: 0.8, sd: 0.05}
+    orientation: {dist: normal, mean: 45, sd: 5}
+  dim_peaked:
+    intensity: {dist: normal, mean: 900, sd: 80}
+    profile: {kind: gaussian, sigma_frac: 0.35}
+  two_sizes:
+    diameter:
+      dist: mixture
+      components:
+        - {weight: 0.5, dist: normal, mean: 8, sd: 1}
+        - {weight: 0.5, dist: normal, mean: 20, sd: 2}
+  crowded:
+    count: {dist: poisson, mean: 42}
+    arrangement: {kind: clumped, clusters: 3, spread: 30}
+layout:
+  kind: by_row
+  order: [control, control_twin, large, elongated, aligned, dim_peaked, two_sizes, crowded]
+expectations:
+  reference: control
+  same: [control_twin]
+  differs:
+    large: [diameter]
+    elongated: [eccentricity]
+    aligned: [eccentricity, orientation_spread]
+    dim_peaked: [intensity]
+    two_sizes: [bimodal_diameter]
+    crowded: [count, nn_distance]
+  pairs:
+    - {a: elongated, b: aligned, differs: [orientation_spread], same: [eccentricity]}
+
+qc_defects:
+  aggregation:
+    level: well
+    assign:
+      kind: random
+      fraction: 0.15
+    degree: {dist: uniform, low: 0.1, high: 0.9}
+    clusters: {dist: poisson, mean: 4}
+    spread: {dist: normal, mean: 25, sd: 5}
+  thresholds: {warn: 0.2, fail: 0.5}

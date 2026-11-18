@@ -1,0 +1,100 @@
+# Tune and calibrate on this design, never on default.yaml: same layout and phenotypes, seed 4242, 1 site per well.
+generator: cell_plate
+seed: 4242
+plate:
+  format: 96
+  plates: 1
+  sites_per_well: 1
+  image: {height: 1024, width: 1024, dtype: uint16, pixel_size_um: 0.65}
+  channels:
+    - {name: DNA, stain: Hoechst 33342, psf_sigma_px: 0.7}
+    - {name: ER, stain: Concanavalin A, psf_sigma_px: 0.7}
+    - {name: RNA, stain: SYTO 14, psf_sigma_px: 0.7}
+    - {name: AGP, stain: Phalloidin + WGA, psf_sigma_px: 0.7}
+    - {name: Mito, stain: MitoTracker, psf_sigma_px: 0.7}
+image_effects:
+  background: {dist: normal, mean: 200, sd: 5}
+  noise: {poisson: true, gaussian_sd: 8}
+  illumination: {kind: radial, strength: 0.12}
+  edge_effect: {enabled: true, dim: 0.1, count_factor: 0.8}
+base_cell:
+  count: {dist: poisson, mean: 120}
+  overlap_fraction: 0.25
+  nucleus:
+    diameter: {dist: normal, mean: 22, sd: 2.5}
+    eccentricity: {dist: beta_mean, mean: 0.45, sd: 0.1}
+    lumpiness: {dist: fixed, value: 0.05}
+  body:
+    diameter: {dist: normal, mean: 64, sd: 8}
+    eccentricity: {dist: beta_mean, mean: 0.5, sd: 0.12}
+    lumpiness: {dist: fixed, value: 0.18}
+    nucleus_offset: {dist: uniform, low: 0, high: 0.15}
+  channels:
+    DNA: {intensity: {dist: normal, mean: 3000, sd: 300}}
+    ER: {intensity: {dist: normal, mean: 1500, sd: 150}}
+    RNA: {intensity: {dist: normal, mean: 1200, sd: 120}}
+    AGP: {intensity: {dist: normal, mean: 1800, sd: 180}}
+    Mito: {intensity: {dist: normal, mean: 1400, sd: 140}}
+phenotypes:
+  no_effect: {}
+  cytotoxic: {count_factor: 0.35, body_diameter_factor: 0.9}
+  nuclear_shrink: {nucleus_diameter_factor: 0.7, dna_intensity_factor: 1.25, nucleoli_count_factor: 0.5, rna_intensity_factor: 0.7}
+  cell_enlarge: {body_diameter_factor: 1.4}
+  mito_fragment: {mito_length_factor: 0.35, mito_count_factor: 2.0}
+  chromatin_condense: {dna_foci_add: 8, dna_intensity_factor: 1.15}
+  cell_elongate: {body_eccentricity_add: 0.35}
+  multinucleate: {multinucleate_add: 0.6}
+  actin_disrupt: {agp_fibre_factor: 0.1, body_lumpiness_factor: 0.3, body_diameter_factor: 0.9}
+  apoptotic: {count_factor: 0.4, nucleus_diameter_factor: 0.6, dna_intensity_factor: 1.8, body_diameter_factor: 0.75}
+compounds:
+  DMSO: {role: negative_control}
+  POS-CTRL: {role: positive_control, phenotype: apoptotic, dose: 1.0}
+  CPD-001: {phenotype: no_effect}
+  CPD-002: {phenotype: cytotoxic}
+  CPD-003: {phenotype: nuclear_shrink}
+  CPD-004: {phenotype: cell_enlarge}
+  CPD-005: {phenotype: mito_fragment}
+  CPD-006: {phenotype: chromatin_condense}
+  CPD-007: {phenotype: cell_elongate}
+  CPD-008: {phenotype: multinucleate}
+  CPD-009: {phenotype: actin_disrupt}
+doses:
+  low: {label: "1 uM", strength: 0.4}
+  high: {label: "10 uM", strength: 1.0}
+layout:
+  kind: controlled_random
+  fixed:
+    A01: DMSO
+    B06: DMSO
+    C11: DMSO
+    D03: DMSO
+    E08: DMSO
+    F12: DMSO
+    G02: DMSO
+    H07: DMSO
+    A07: POS-CTRL
+    B12: POS-CTRL
+    C04: POS-CTRL
+    D09: POS-CTRL
+    E01: POS-CTRL
+    F05: POS-CTRL
+    G10: POS-CTRL
+    H03: POS-CTRL
+  blanks: 8
+  replicates: 4
+  constraints: {no_shared_row_or_col: true, doses_not_adjacent: true}
+qc_defects:
+  blurred_sites: {n: 6, psf_sigma_px: 3.5}
+  saturated_debris: {n: 4}
+expectations:
+  reference: DMSO
+  same: [CPD-001]
+  differs:
+    CPD-002: [{feature: Image_Count_Cells, direction: down}]
+    CPD-003: [{feature: Nuclei_AreaShape_Area, direction: down}]
+    CPD-004: [{feature: Cells_AreaShape_Area, direction: up}]
+    CPD-005: [{feature: "Cytoplasm_Granularity_*_Mito", direction: up}]
+    CPD-006: [{feature: "Nuclei_Texture_Contrast_DNA*", direction: up}]
+    CPD-007: [{feature: Cells_AreaShape_Eccentricity, direction: up}]
+    CPD-008: [{feature: Nuclei_Neighbors_FirstClosestDistance_Adjacent, direction: down}]
+    CPD-009: [{feature: "Cytoplasm_Texture_Contrast_AGP*", direction: down}]

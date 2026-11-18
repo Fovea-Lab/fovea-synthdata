@@ -1,0 +1,22 @@
+name: Propose a generator or preset
+description: Describe an analysis task and the known answer a synthetic dataset could provide.
+body:
+  - type: textarea
+    id: pipeline
+    attributes:
+      label: Pipeline case
+      description: What does the pipeline consume and which measurement would you like to test?
+    validations:
+      required: true
+  - type: textarea
+    id: truth
+    attributes:
+      label: Ground truth
+      description: Describe the correct result, units, and how to match it back to each image or object.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Smallest useful example
+      description: Include the proposed inputs, writer or file format, expected result, and relevant existing presets.

@@ -1,0 +1,138 @@
+# Two plates of 96 wells, 5 channels, 18 test compounds in 5 synthetic mechanisms plus 2 nulls and 1 lone compound. The mechanism names are labels only.
+# Same layout and compounds as moa.yaml; the one other difference is size: 1 site per well at 512 px,
+# with the cell count mean cut from 120 to 30 so density per area matches. For the platform walk only; not tuned.
+generator: cell_plate
+seed: 2032
+plate:
+  format: 96
+  plates: 2
+  sites_per_well: 1
+  image: {height: 512, width: 512, dtype: uint16, pixel_size_um: 0.65}
+  channels:
+    - {name: DNA, stain: Hoechst 33342, psf_sigma_px: 0.7}
+    - {name: ER, stain: Concanavalin A, psf_sigma_px: 0.7}
+    - {name: RNA, stain: SYTO 14, psf_sigma_px: 0.7}
+    - {name: AGP, stain: Phalloidin + WGA, psf_sigma_px: 0.7}
+    - {name: Mito, stain: MitoTracker, psf_sigma_px: 0.7}
+image_effects:
+  background: {dist: normal, mean: 200, sd: 5}
+  noise: {poisson: true, gaussian_sd: 8}
+  illumination: {kind: radial, strength: 0.12}
+  edge_effect: {enabled: true, dim: 0.1, count_factor: 0.8}
+plate_effects:  # calibrated with the moa_tuning design, using plate 1 as the reference
+  - {}
+  - gain: {DNA: 1.6, ER: 0.7, RNA: 1.5, AGP: 0.7, Mito: 1.4}
+    background_shift: {DNA: 30, ER: 10, RNA: 20, Mito: 25}
+    count_factor: 0.9
+base_cell:
+  count: {dist: poisson, mean: 30}
+  overlap_fraction: 0.25
+  nucleus:
+    diameter: {dist: normal, mean: 22, sd: 2.5}
+    eccentricity: {dist: beta_mean, mean: 0.45, sd: 0.1}
+    lumpiness: {dist: fixed, value: 0.05}
+  body:
+    diameter: {dist: normal, mean: 64, sd: 8}
+    eccentricity: {dist: beta_mean, mean: 0.5, sd: 0.12}
+    lumpiness: {dist: fixed, value: 0.18}
+    nucleus_offset: {dist: uniform, low: 0, high: 0.15}
+  channels:
+    DNA: {intensity: {dist: normal, mean: 3000, sd: 300}}
+    ER: {intensity: {dist: normal, mean: 1500, sd: 150}}
+    RNA: {intensity: {dist: normal, mean: 1200, sd: 120}}
+    AGP: {intensity: {dist: normal, mean: 1800, sd: 180}}
+    Mito: {intensity: {dist: normal, mean: 1400, sd: 140}}
+phenotypes:
+  no_effect: {}
+  actin_disrupt: {agp_fibre_factor: 0.1, body_lumpiness_factor: 0.3, body_diameter_factor: 0.9}
+  mito_fragment: {mito_length_factor: 0.35, mito_count_factor: 2.0}
+  multinucleate_enlarged: {multinucleate_add: 0.6, body_diameter_factor: 1.3}
+  dna_damaged: {nucleus_diameter_factor: 0.75, dna_intensity_factor: 1.25, dna_foci_add: 6}
+  hdac_inhibited: {nucleus_diameter_factor: 1.25, dna_foci_add: 6}
+  cell_elongate: {body_eccentricity_add: 0.35}
+  # Side effects: small, named, each used by exactly one compound, none repeating a knob its own family plants.
+  side_rna_up: {rna_intensity_factor: 1.4}
+  side_rna_down: {rna_intensity_factor: 0.7}
+  side_nucleoli_up: {nucleoli_count_factor: 1.5}
+  side_nucleoli_down: {nucleoli_count_factor: 0.6}
+  side_small_body: {body_diameter_factor: 0.85}
+  side_large_body: {body_diameter_factor: 1.2}
+  side_round: {body_eccentricity_add: -0.2}
+  side_elongate: {body_eccentricity_add: 0.2}
+  side_fewer: {count_factor: 0.75}
+  side_lumpy: {body_lumpiness_factor: 1.6}
+  side_fibre_down: {agp_fibre_factor: 0.6}
+  side_mito_long: {mito_length_factor: 1.5}
+  side_mito_few: {mito_count_factor: 0.6}
+  side_fibre_up: {agp_fibre_factor: 1.5}
+  side_dna_dim: {dna_intensity_factor: 0.8}
+  apoptotic: {count_factor: 0.4, nucleus_diameter_factor: 0.6, dna_intensity_factor: 1.8, body_diameter_factor: 0.75}
+compounds:
+  DMSO: {role: negative_control}
+  POS-CTRL: {role: positive_control, phenotype: apoptotic, dose: 1.0}
+  MOA-A1: {phenotype: actin_disrupt, mechanism: actin_disruptor, potency: 1.0, side_effect: {phenotype: side_rna_up, strength: 0.6}}
+  MOA-A2: {phenotype: actin_disrupt, mechanism: actin_disruptor, potency: 0.7, side_effect: {phenotype: side_mito_long, strength: 0.6}}
+  MOA-A3: {phenotype: actin_disrupt, mechanism: actin_disruptor, potency: 0.45, side_effect: {phenotype: side_nucleoli_up, strength: 0.6}}
+  MOA-B1: {phenotype: mito_fragment, mechanism: mitochondrial_toxin, potency: 1.0, side_effect: {phenotype: side_nucleoli_down, strength: 0.6}}
+  MOA-B2: {phenotype: mito_fragment, mechanism: mitochondrial_toxin, potency: 0.7, side_effect: {phenotype: side_rna_down, strength: 0.6}}
+  MOA-B3: {phenotype: mito_fragment, mechanism: mitochondrial_toxin, potency: 0.45, side_effect: {phenotype: side_fibre_up, strength: 0.6}}
+  MOA-C1: {phenotype: multinucleate_enlarged, mechanism: microtubule_inhibitor, potency: 1.0, side_effect: {phenotype: side_dna_dim, strength: 0.6}}
+  MOA-C2: {phenotype: multinucleate_enlarged, mechanism: microtubule_inhibitor, potency: 0.7, side_effect: {phenotype: side_fibre_down, strength: 0.6}}
+  MOA-C3: {phenotype: multinucleate_enlarged, mechanism: microtubule_inhibitor, potency: 0.45, side_effect: {phenotype: side_mito_few, strength: 0.6}}
+  MOA-D1: {phenotype: dna_damaged, mechanism: dna_damage, potency: 1.0, side_effect: {phenotype: side_round, strength: 0.6}}
+  MOA-D2: {phenotype: dna_damaged, mechanism: dna_damage, potency: 0.7, side_effect: {phenotype: side_small_body, strength: 0.6}}
+  MOA-D3: {phenotype: dna_damaged, mechanism: dna_damage, potency: 0.45, side_effect: {phenotype: side_lumpy, strength: 0.6}}
+  MOA-E1: {phenotype: hdac_inhibited, mechanism: hdac_inhibitor, potency: 1.0, side_effect: {phenotype: side_fewer, strength: 0.6}}
+  MOA-E2: {phenotype: hdac_inhibited, mechanism: hdac_inhibitor, potency: 0.7, side_effect: {phenotype: side_large_body, strength: 0.6}}
+  MOA-E3: {phenotype: hdac_inhibited, mechanism: hdac_inhibitor, potency: 0.45, side_effect: {phenotype: side_elongate, strength: 0.6}}
+  NULL-1: {phenotype: no_effect}
+  NULL-2: {phenotype: no_effect}
+  LONE-1: {phenotype: cell_elongate}
+doses:
+  low: {label: "1 uM", strength: 0.4}
+  high: {label: "10 uM", strength: 1.0}
+layout:
+  kind: controlled_random
+  fixed:
+    A01: DMSO
+    B06: DMSO
+    C11: DMSO
+    D03: DMSO
+    E08: DMSO
+    F12: DMSO
+    G02: DMSO
+    H07: DMSO
+    A07: POS-CTRL
+    B12: POS-CTRL
+    C04: POS-CTRL
+    D09: POS-CTRL
+    E01: POS-CTRL
+    F05: POS-CTRL
+    G10: POS-CTRL
+    H03: POS-CTRL
+  blanks: 8
+  replicates: 2
+  constraints: {no_shared_row_or_col: true, doses_not_adjacent: true}
+qc_defects:  # counts are per plate
+  blurred_sites: {n: 3, psf_sigma_px: 3.5}
+  saturated_debris: {n: 2}
+expectations:
+  reference: DMSO
+  same: [NULL-1, NULL-2]
+  differs:
+    MOA-A1: [{feature: "Cytoplasm_Texture_Contrast_AGP*", direction: down}]
+    MOA-A2: [{feature: "Cytoplasm_Texture_Contrast_AGP*", direction: down}]
+    MOA-A3: [{feature: "Cytoplasm_Texture_Contrast_AGP*", direction: down}]
+    MOA-B1: [{feature: "Cytoplasm_Granularity_*_Mito", direction: up}]
+    MOA-B2: [{feature: "Cytoplasm_Granularity_*_Mito", direction: up}]
+    MOA-B3: [{feature: "Cytoplasm_Granularity_*_Mito", direction: up}]
+    MOA-C1: [{feature: Nuclei_Neighbors_FirstClosestDistance_Adjacent, direction: down}]
+    MOA-C2: [{feature: Nuclei_Neighbors_FirstClosestDistance_Adjacent, direction: down}]
+    MOA-C3: [{feature: Nuclei_Neighbors_FirstClosestDistance_Adjacent, direction: down}]
+    MOA-D1: [{feature: Nuclei_AreaShape_Area, direction: down}]
+    MOA-D2: [{feature: Nuclei_AreaShape_Area, direction: down}]
+    MOA-D3: [{feature: Nuclei_AreaShape_Area, direction: down}]
+    MOA-E1: [{feature: Nuclei_AreaShape_Area, direction: up}]
+    MOA-E2: [{feature: Nuclei_AreaShape_Area, direction: up}]
+    MOA-E3: [{feature: Nuclei_AreaShape_Area, direction: up}]
+    LONE-1: [{feature: Cells_AreaShape_Eccentricity, direction: up}]
