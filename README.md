@@ -1,4 +1,3 @@
-> **AI authorship:** Created by OpenAI Codex. **Model:** the exact runtime model identifier was not exposed to the assistant.
 
 # Fovea SynthData
 
